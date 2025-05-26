@@ -15,6 +15,12 @@ jobs:
     # Checkout du code source
     - uses: actions/checkout@v3
     
+    # Setup Maven dependencies
+    - name: Setup Maven Dependencies
+      run: |
+        mkdir -p libs
+        cp libs/*.jar $GITHUB_WORKSPACE/libs/
+    
     # Configure Java 17
     - name: Set up JDK 17
       uses: actions/setup-java@v3
