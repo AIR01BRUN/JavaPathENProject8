@@ -51,22 +51,29 @@
 			<groupId>gpsUtil</groupId>
 			<artifactId>gpsUtil</artifactId>
 			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/gpsUtil.jar</systemPath>
 		</dependency>
 
+		
 		<dependency>
 			<groupId>tripPricer</groupId>
 			<artifactId>tripPricer</artifactId>
 			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/tripPricer.jar</systemPath>
 		</dependency>
 
 		<dependency>
 			<groupId>rewardCentral</groupId>
 			<artifactId>rewardCentral</artifactId>
 			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/RewardCentral.jar</systemPath>
 		</dependency>
 	</dependencies>
 
-	<build>
+    <build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -74,5 +81,7 @@
 			</plugin>
 		</plugins>
 	</build>
+
+
 
 </project>

@@ -1,5 +1,6 @@
 package com.openclassrooms.tourguide.service;
 
+import com.openclassrooms.tourguide.dto.AttractionUserDistance;
 import com.openclassrooms.tourguide.helper.InternalTestHelper;
 import com.openclassrooms.tourguide.tracker.Tracker;
 import com.openclassrooms.tourguide.user.User;
@@ -42,7 +43,7 @@ public class TourGuideService {
 	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
 		this.gpsUtil = gpsUtil;
 		this.rewardsService = rewardsService;
-		
+
 		Locale.setDefault(Locale.US);
 
 		if (testMode) {
@@ -95,15 +96,41 @@ public class TourGuideService {
 		return visitedLocation;
 	}
 
-	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
-		List<Attraction> nearbyAttractions = new ArrayList<>();
-		for (Attraction attraction : gpsUtil.getAttractions()) {
-			if (rewardsService.isWithinAttractionProximity(attraction, visitedLocation.location)) {
-				nearbyAttractions.add(attraction);
-			}
-		}
+	/*
+	 * public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation)
+	 * {
+	 * List<Attraction> nearbyAttractions = new ArrayList<>();
+	 * for (Attraction attraction : gpsUtil.getAttractions()) {
+	 * if (!rewardsService.isWithinAttractionProximity(attraction,
+	 * visitedLocation.location)) {
+	 * nearbyAttractions.add(attraction);
+	 * }
+	 * }
+	 * 
+	 * return nearbyAttractions;
+	 * }
+	 */
 
-		return nearbyAttractions;
+	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
+		List<Attraction> fiveNearbyAttractions = new ArrayList<>();
+		List<Attraction> nearAttractions = gpsUtil.getAttractions();
+
+		for (int i = 0; i < 5; i++) {
+			double distance = 10000000;
+			Attraction nearAttraction = null;
+			for (Attraction attraction : nearAttractions) {
+				double distanceAttractionUser = rewardsService.getDistance(attraction, visitedLocation.location);
+
+				if (distanceAttractionUser < distance && fiveNearbyAttractions.stream()
+						.anyMatch(a -> a.attractionName.equals(attraction.attractionName)) == false) {
+					distance = distanceAttractionUser;
+					nearAttraction = attraction;
+				}
+			}
+			fiveNearbyAttractions.add(nearAttraction);
+			nearAttractions.remove(nearAttraction);
+		}
+		return fiveNearbyAttractions;
 	}
 
 	private void addShutDownHook() {
@@ -161,4 +188,18 @@ public class TourGuideService {
 		return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
 	}
 
+	public List<AttractionUserDistance> getAttractionUserDistances(User user) {
+		List<AttractionUserDistance> attractionUserDistances = new ArrayList<>();
+		VisitedLocation visitedLocation = getUserLocation(user);
+		List<Attraction> attractions = getNearByAttractions(visitedLocation);
+		for (Attraction attraction : attractions) {
+			AttractionUserDistance a = new AttractionUserDistance(attraction.attractionName, attraction.latitude,
+					attraction.longitude,
+					visitedLocation.location.latitude, visitedLocation.location.longitude,
+					rewardsService.getDistance(attraction, visitedLocation.location),
+					rewardsService.getRewardPoints(attraction, user));
+			attractionUserDistances.add(a);
+		}
+		return attractionUserDistances;
+	}
 }
