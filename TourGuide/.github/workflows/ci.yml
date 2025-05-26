@@ -26,6 +26,19 @@ jobs:
     # Build avec Maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+      
+    # Ajouter un retour visuel du statut
+    - name: Pipeline Status
+      run: |
+        echo "Pipeline Status: ✅ Success"
+        echo "Build Completed at $(date)"
+    
+    # Notifier en cas d'échec
+    - name: Notify on Failure
+      if: failure()
+      run: |
+        echo "Pipeline Status: ❌ Failed"
+        echo "Build Failed at $(date)"
     
     # Exécute les tests
     - name: Run Tests
