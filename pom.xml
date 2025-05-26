@@ -61,7 +61,7 @@
 			<artifactId>tripPricer</artifactId>
 			<version>1.0.0</version>
 			<scope>system</scope>
-			<systemPath>${libs.path}/tripPricer.jar</systemPath>
+			<systemPath>${libs.path}/TripPricer.jar</systemPath>
 		</dependency>
 
 		<dependency>
