@@ -92,24 +92,9 @@ public class TourGuideService {
 	public VisitedLocation trackUserLocation(User user) {
 		VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
 		user.addToVisitedLocations(visitedLocation);
-		rewardsService.calculateRewards(user);
+
 		return visitedLocation;
 	}
-
-	/*
-	 * public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation)
-	 * {
-	 * List<Attraction> nearbyAttractions = new ArrayList<>();
-	 * for (Attraction attraction : gpsUtil.getAttractions()) {
-	 * if (!rewardsService.isWithinAttractionProximity(attraction,
-	 * visitedLocation.location)) {
-	 * nearbyAttractions.add(attraction);
-	 * }
-	 * }
-	 * 
-	 * return nearbyAttractions;
-	 * }
-	 */
 
 	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
 		List<Attraction> fiveNearbyAttractions = new ArrayList<>();

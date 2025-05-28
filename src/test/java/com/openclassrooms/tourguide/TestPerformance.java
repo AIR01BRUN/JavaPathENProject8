@@ -55,24 +55,40 @@ public class TestPerformance {
 	private GpsUtil gpsUtil;
 	private RewardsService rewardsService;
 	private TourGuideService tourGuideService;
+	// Service exécuteur pour gérer le pool de threads
 	private ExecutorService executorService;
+	// Nombre de threads = nombre de processeurs * 4 pour optimiser le parallélisme
 	private static final int THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors() * 4;
+	// Nombre total d'utilisateurs pour le test
 	private static final int USER_COUNT = 100;
+	// Taille des lots pour le traitement par lots
 	private static final int BATCH_SIZE = USER_COUNT / 10;
+	// Fréquence des logs pour le suivi de progression
 	private static final int LOG_FREQUENCY = BATCH_SIZE / 10;
+	// Service exécuteur spécifique pour le calcul des récompenses
 	private ExecutorService rewardsExecutor;
 
+	/**
+	 * Configuration initiale avant chaque test
+	 * Initialise les services et configure le nombre d'utilisateurs
+	 */
 	@BeforeEach
 	public void setUp() {
 		gpsUtil = new GpsUtil();
 		rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(USER_COUNT);
 		tourGuideService = new TourGuideService(gpsUtil, rewardsService);
+		// Initialisation du pool de threads principal
 		executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+		// Initialisation du pool ForkJoin pour le calcul parallèle des récompenses
 		rewardsExecutor = new ForkJoinPool(THREAD_POOL_SIZE);
 
 	}
 
+	/**
+	 * Test de performance pour le suivi de localisation
+	 * Objectif : Traiter 100 000 utilisateurs en moins de 15 minutes
+	 */
 	@Test
 	public void highVolumeTrackLocation() {
 
@@ -84,6 +100,7 @@ public class TestPerformance {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 
+		// Compteur atomique pour suivre le progrès du traitement
 		AtomicInteger totalProcessed = new AtomicInteger(0);
 
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -117,6 +134,11 @@ public class TestPerformance {
 		assertTrue(TimeUnit.MINUTES.toSeconds(15) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
 	}
 
+	/**
+	 * Test de performance pour le calcul des récompenses
+	 * Objectif : Calculer les récompenses pour 100 000 utilisateurs en moins de 20
+	 * minutes
+	 */
 	@Test
 	public void highVolumeGetRewards() {
 		StopWatch stopWatch = new StopWatch();

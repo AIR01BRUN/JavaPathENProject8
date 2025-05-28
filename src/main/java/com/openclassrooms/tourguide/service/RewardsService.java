@@ -43,7 +43,6 @@ public class RewardsService {
 		List<Attraction> attractions = gpsUtil.getAttractions();
 
 		List<UserReward> userRewards = user.getUserRewards();
-		AtomicInteger counter = new AtomicInteger(0);
 
 		userLocations.forEach(visitedLocation -> {
 			attractions.parallelStream()
@@ -53,8 +52,7 @@ public class RewardsService {
 					.forEach(attraction -> {
 						user.addUserReward(
 								new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-						System.out.println("Attraction ajoutée: " + attraction.attractionName +
-								" (#" + counter.incrementAndGet() + "/" + attractions.size() + ")");
+
 					});
 		});
 
