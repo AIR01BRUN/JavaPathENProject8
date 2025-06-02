@@ -55,8 +55,7 @@ public class TestPerformance {
 	private GpsUtil gpsUtil;
 	private RewardsService rewardsService;
 	private TourGuideService tourGuideService;
-	// Service exécuteur pour gérer le pool de threads
-	private ExecutorService executorService;
+
 	// Nombre de threads = nombre de processeurs * 4 pour optimiser le parallélisme
 	private static final int THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors() * 4;
 	// Nombre total d'utilisateurs pour le test
@@ -65,8 +64,10 @@ public class TestPerformance {
 	private static final int BATCH_SIZE = USER_COUNT / 10;
 	// Fréquence des logs pour le suivi de progression
 	private static final int LOG_FREQUENCY = BATCH_SIZE / 10;
-	// Service exécuteur spécifique pour le calcul des récompenses
+	// Service exécuteur pour gérer le pool de threads
 	private ExecutorService rewardsExecutor;
+	// Service exécuteur pour gérer le pool de threads
+	private ExecutorService trackExecutor;
 
 	/**
 	 * Configuration initiale avant chaque test
@@ -78,10 +79,10 @@ public class TestPerformance {
 		rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(USER_COUNT);
 		tourGuideService = new TourGuideService(gpsUtil, rewardsService);
-		// Initialisation du pool de threads principal
-		executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-		// Initialisation du pool ForkJoin pour le calcul parallèle des récompenses
-		rewardsExecutor = new ForkJoinPool(THREAD_POOL_SIZE);
+		// Initialisation du pool de threads pour le suivi de localisation
+		trackExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+		// Initialisation du pool de threads pour les récompenses
+		rewardsExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
 	}
 
@@ -119,7 +120,7 @@ public class TestPerformance {
 							" - " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
 
 				});
-			}, executorService);
+			}, trackExecutor);
 
 			futures.add(future);
 		}
@@ -163,6 +164,8 @@ public class TestPerformance {
 					return CompletableFuture.runAsync(() -> {
 						allUsers.subList(start, end).parallelStream().forEach(user -> {
 							rewardsService.calculateRewards(user);
+
+							// Compteur atomique pour suivre le progrès du traitement
 							int count = totalProcessed.incrementAndGet();
 							if (count % LOG_FREQUENCY == 0) {
 								System.out.println("Progrès: " + count + "/" + allUsers.size());
@@ -172,12 +175,12 @@ public class TestPerformance {
 				})
 				.collect(Collectors.toList());
 
+		// Attendre que tous les futurs soient terminés
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
 		stopWatch.stop();
 		tourGuideService.tracker.stopTracking();
 
-		// Vérification optimisée
 		long rewardsCount = allUsers.parallelStream()
 				.filter(user -> user.getUserRewards().size() > 0)
 				.count();
